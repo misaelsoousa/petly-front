@@ -16,6 +16,8 @@
   --color-primary-dark: var(--primary-dark);
   --color-secondary: var(--secondary);
   --color-accent: var(--accent);
+  --color-gray: #808080;
+  --color-dark-gray: #363636;
   --font-sans: 'Roboto', Arial, Helvetica, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
