@@ -17,6 +17,8 @@ import type {
   User,
 } from "@/lib/types";
 
+import { useRouter } from "next/navigation";
+
 const tabs = [
   { id: "pets", label: "Meus pets" },
   { id: "adocoes", label: "Solicitações" },
@@ -26,7 +28,8 @@ const tabs = [
 ] as const;
 
 export default function DashboardPage() {
-  const { user, token } = useAuth();
+  const { user, token, loading } = useAuth();
+  const router = useRouter();
   const isAdmin = useHasRole(["ADMIN"]);
   const isOng = useHasRole(["ONG", "ADMIN"]);
   const [activeTab, setActiveTab] =
@@ -52,6 +55,12 @@ export default function DashboardPage() {
     photoUrl: "",
     videoUrl: "",
   });
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [loading, user, router]);
 
   const fetchPets = useCallback(async () => {
     try {
@@ -117,15 +126,21 @@ export default function DashboardPage() {
   }, [token, isAdmin]);
 
   useEffect(() => {
-    fetchPets();
-    fetchEvents();
-  }, [fetchPets, fetchEvents]);
-
-  useEffect(() => {
-    fetchAdoptions();
-    fetchReports();
-    fetchUsers();
-  }, [fetchAdoptions, fetchReports, fetchUsers]);
+    if (user) {
+      fetchPets();
+      fetchEvents();
+      fetchAdoptions();
+      fetchReports();
+      fetchUsers();
+    }
+  }, [
+    user,
+    fetchPets,
+    fetchEvents,
+    fetchAdoptions,
+    fetchReports,
+    fetchUsers,
+  ]);
 
   const myPets = useMemo(
     () => pets.filter((pet) => pet.ownerId === user?.id),
@@ -261,6 +276,7 @@ export default function DashboardPage() {
                 Remover
               </button>
             </div>
+.
           </div>
         ))
       )}
@@ -489,6 +505,14 @@ export default function DashboardPage() {
         return null;
     }
   };
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] text-white px-4 py-10">

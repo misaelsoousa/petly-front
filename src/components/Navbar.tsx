@@ -5,6 +5,7 @@ import Link from "next/link";
 import SearchBar from "./SearchBar";
 import { Logo } from "../../public/icons";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 
 interface NavbarProps {
@@ -16,6 +17,17 @@ export default function Navbar({ searchValue, onSearchChange }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 16);
@@ -26,9 +38,9 @@ export default function Navbar({ searchValue, onSearchChange }: NavbarProps) {
   const navItems = useMemo(
     () => [
       { label: "Cadastrar pet", href: "/cadastrar-pet" },
-      ...(user ? [{ label: "Dashboard", href: "/dashboard" }] : []),
+      ...(isMounted && user ? [{ label: "Dashboard", href: "/dashboard" }] : []),
     ],
-    [user],
+    [user, isMounted],
   );
 
   return (
@@ -104,7 +116,7 @@ export default function Navbar({ searchValue, onSearchChange }: NavbarProps) {
                   ))}
                 </nav>
                 <div className="pt-2 border-t border-white/6">
-                  {user ? (
+                  {isMounted && user ? (
                     <div className="flex items-center justify-between gap-4">
                       <div className="text-sm">
                         <p className="font-semibold">{user.name}</p>
@@ -142,7 +154,7 @@ export default function Navbar({ searchValue, onSearchChange }: NavbarProps) {
         </div>
 
         <div className="lg:flex items-center justify-between gap-4 text-white hidden">
-          {user ? (
+        {isMounted && user ? (
             <>
               <div className="text-right">
                 <p className="text-sm font-semibold">{user.name}</p>

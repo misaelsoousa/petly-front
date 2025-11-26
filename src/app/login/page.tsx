@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Logo } from "../../../public/icons";
+import { Arrow, Logo } from "../../../public/icons";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { useRouter } from "next/navigation";
@@ -62,7 +62,7 @@ export default function LoginPage() {
       } else {
         setFeedback({
           type: "success",
-          message: "Função em desenvolvimento. Em breve você poderá redefinir a senha no sistema.",
+          message: "Um e-mail foi enviado para a recuperação de senha.",
         });
         setIsSubmitting(false);
       }
@@ -115,15 +115,7 @@ export default function LoginPage() {
           <div className="relative z-10 text-white space-y-6">
             <Logo className="h-14" />
             <h2 className="text-3xl font-bold">Equipe seus resgates com o Petly.</h2>
-            <p className="text-white/70">
-              A autenticação é processada pelo servidor.
-              Faça login, registre uma nova conta ou acompanhe pedidos de adoção.
-            </p>
-            <ul className="space-y-3 text-white/80">
-              <li>• Tokens JWT armazenados com segurança</li>
-              <li>• Suporte a papéis como ADMIN, ONG e VET</li>
-              <li>• Pronto para uso em ambiente de desenvolvimento</li>
-            </ul>
+            <p>Entre para poder compartilhar seus pets, encontrar pets perdidos e ajudar nossa comunidade.</p>
           </div>
         </div>
 
@@ -137,8 +129,8 @@ export default function LoginPage() {
                 {authMode === "login" ? "Bem-vindo de volta" : authMode === "register" ? "Crie sua conta" : "Recuperar acesso"}
               </h1>
             </div>
-            <Link href="/" className="text-sm text-white/60 hover:text-white">
-              ← Voltar
+            <Link href="/" className="text-sm text-white/60 hover:text-white flex items-center gap-1">
+              <Arrow/> Voltar
             </Link>
           </div>
 
