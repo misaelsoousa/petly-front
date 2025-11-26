@@ -1,261 +1,205 @@
-"use client"
+"use client";
+
 import React, { useState } from "react";
 import { Logo } from "../../../public/icons";
+import Link from "next/link";
+import { useAuth } from "@/providers/AuthProvider";
+import { useRouter } from "next/navigation";
 
-type AuthMode = 'login' | 'register' | 'forgot';
+type AuthMode = "login" | "register" | "forgot";
+
+interface FormState {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+const initialState: FormState = {
+  name: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+};
 
 export default function LoginPage() {
-  const [authMode, setAuthMode] = useState<AuthMode>('login');
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    name: '',
-    phone: ''
-  });
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [formData, setFormData] = useState<FormState>(initialState);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, register } = useAuth();
+  const router = useRouter();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Form submitted:', { authMode, formData });
+  const resetFeedback = () => setFeedback(null);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    resetFeedback();
+    setIsSubmitting(true);
+    try {
+      if (authMode === "login") {
+        await login(formData.email, formData.password);
+        setFeedback({ type: "success", message: "Login efetuado!" });
+        router.push("/");
+      } else if (authMode === "register") {
+        if (formData.password !== formData.confirmPassword) {
+          setFeedback({ type: "error", message: "As senhas não conferem." });
+          setIsSubmitting(false);
+          return;
+        }
+        await register(formData.name, formData.email, formData.password);
+        setFeedback({ type: "success", message: "Cadastro realizado! Você já está logado." });
+        router.push("/");
+      } else {
+        setFeedback({
+          type: "success",
+          message: "Função em desenvolvimento. Em breve você poderá redefinir a senha no sistema.",
+        });
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      const apiError = error as { message?: string; details?: { message?: string; field?: string; errors?: unknown } };
+      // Prioriza a mensagem do backend, depois tenta extrair dos detalhes
+      let errorMessage = apiError?.details?.message || apiError?.message || "Não foi possível autenticar. Verifique os dados.";
+      
+      setFeedback({
+        type: "error",
+        message: errorMessage,
+      });
+      setIsSubmitting(false);
+    }
   };
+
+  const renderInput = (
+    label: string,
+    name: keyof FormState,
+    type = "text",
+    placeholder?: string,
+    required = true,
+  ) => (
+    <div>
+      <label
+        htmlFor={name}
+        className="block text-sm font-medium text-white/70 mb-2"
+      >
+        {label}
+      </label>
+      <input
+        type={type}
+        id={name}
+        name={name}
+        value={formData[name]}
+        onChange={handleInputChange}
+        onFocus={resetFeedback}
+        required={required}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#212121] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Logo className="h-20 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white">Petly</h1>
+    <div className="min-h-screen bg-[#050505] px-4 flex items-center justify-center">
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 border border-white/5 rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
+        <div className="relative hidden md:block bg-gradient-to-br from-primary/30 to-transparent p-10">
+          <div className="absolute inset-0 bg-[url('/img/gato-com-crianca-meio.jpg')] opacity-30 bg-cover bg-center" />
+          <div className="relative z-10 text-white space-y-6">
+            <Logo className="h-14" />
+            <h2 className="text-3xl font-bold">Equipe seus resgates com o Petly.</h2>
+            <p className="text-white/70">
+              A autenticação é processada pelo servidor.
+              Faça login, registre uma nova conta ou acompanhe pedidos de adoção.
+            </p>
+            <ul className="space-y-3 text-white/80">
+              <li>• Tokens JWT armazenados com segurança</li>
+              <li>• Suporte a papéis como ADMIN, ONG e VET</li>
+              <li>• Pronto para uso em ambiente de desenvolvimento</li>
+            </ul>
+          </div>
         </div>
 
-        {/* Auth Card */}
-        <div className="bg-dark-gray rounded-lg shadow-lg p-8">
-          {/* Mode Tabs */}
-          <div className="flex mb-6 bg-gray-800 rounded-lg p-1">
+        <div className="bg-[#111] p-8 sm:p-10 flex flex-col gap-6">
+          <div className="flex items-center justify-between text-white">
+            <div>
+              <p className="text-sm uppercase tracking-wide text-white/60">
+                Acesse o ecossistema Petly
+              </p>
+              <h1 className="text-2xl font-semibold mt-1">
+                {authMode === "login" ? "Bem-vindo de volta" : authMode === "register" ? "Crie sua conta" : "Recuperar acesso"}
+              </h1>
+            </div>
+            <Link href="/" className="text-sm text-white/60 hover:text-white">
+              ← Voltar
+            </Link>
+          </div>
+
+          <div className="flex bg-white/5 rounded-full p-1">
+            {(["login", "register"] as AuthMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setAuthMode(mode)}
+                className={`flex-1 py-2 text-sm rounded-full transition ${
+                  authMode === mode
+                    ? "bg-primary text-black font-semibold"
+                    : "text-white/60"
+                }`}
+              >
+                {mode === "login" ? "Login" : "Cadastrar"}
+              </button>
+            ))}
             <button
-              onClick={() => setAuthMode('login')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                authMode === 'login'
-                  ? 'bg-primary text-white'
-                  : 'text-gray-400 hover:text-white'
+              onClick={() => setAuthMode("forgot")}
+              className={`flex-1 py-2 text-sm rounded-full transition ${
+                authMode === "forgot"
+                  ? "bg-white/10 text-white font-semibold"
+                  : "text-white/60"
               }`}
             >
-              Login
-            </button>
-            <button
-              onClick={() => setAuthMode('register')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                authMode === 'register'
-                  ? 'bg-primary text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Cadastrar
+              Recuperar
             </button>
           </div>
 
-          {/* Forms */}
-          {authMode === 'login' && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <h2 className="text-xl font-bold text-white mb-6">Entre na sua conta</h2>
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="seu@email.com"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                  Senha
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Sua senha"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setAuthMode('forgot')}
-                  className="text-sm text-primary hover:text-primary-dark transition-colors"
-                >
-                  Esqueci minha senha
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg transition-colors"
-              >
-                Entrar
-              </button>
-            </form>
+          {feedback && (
+            <div
+              className={`rounded-2xl px-4 py-3 text-sm ${
+                feedback.type === "success"
+                  ? "bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
+                  : "bg-red-500/10 text-red-200 border border-red-500/30"
+              }`}
+            >
+              {feedback.message}
+            </div>
           )}
 
-          {authMode === 'register' && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <h2 className="text-xl font-bold text-white mb-6">Crie sua conta</h2>
-              
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                  Nome completo
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Seu nome completo"
-                  required
-                />
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {authMode === "register" && renderInput("Nome completo", "name", "text", "Ex: Ana Silva")}
+            {(authMode === "login" || authMode === "register" || authMode === "forgot") &&
+              renderInput("Email", "email", "email", "seu@email.com")}
+            {(authMode === "login" || authMode === "register") &&
+              renderInput("Senha", "password", "password", "Min. 6 caracteres")}
+            {authMode === "register" &&
+              renderInput("Confirmar senha", "confirmPassword", "password")}
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="seu@email.com"
-                  required
-                />
-              </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-3 rounded-2xl bg-primary text-black font-semibold hover:bg-primary-dark transition disabled:opacity-60"
+            >
+              {isSubmitting ? "Enviando..." : "Continuar"}
+            </button>
+          </form>
 
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
-                  Telefone
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="(11) 99999-9999"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                  Senha
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Mínimo 6 caracteres"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                  Confirmar senha
-                </label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Confirme sua senha"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg transition-colors"
-              >
-                Criar conta
-              </button>
-            </form>
-          )}
-
-          {authMode === 'forgot' && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <h2 className="text-xl font-bold text-white mb-6">Recuperar senha</h2>
-              
-              <p className="text-gray-400 mb-6">
-                Digite seu email e enviaremos um link para redefinir sua senha.
-              </p>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="seu@email.com"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg transition-colors"
-              >
-                Enviar link de recuperação
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAuthMode('login')}
-                className="w-full text-gray-400 hover:text-white transition-colors"
-              >
-                Voltar ao login
-              </button>
-            </form>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-gray-400 text-sm">
-            © {new Date().getFullYear()} Petly. Todos os direitos reservados.
+          <p className="text-center text-white/60 text-xs">
+            Ao continuar, você concorda com os termos de uso e política de privacidade da Petly.
           </p>
         </div>
       </div>

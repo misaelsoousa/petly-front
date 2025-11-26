@@ -1,332 +1,364 @@
-"use client"
-import React, { useState } from "react";
+"use client";
+
+import React, { useMemo, useState } from "react";
 import { Logo } from "../../../public/icons";
 import Link from "next/link";
+import { petService } from "@/services/petService";
+import type { PetStatus } from "@/lib/types";
+import { useAuth } from "@/providers/AuthProvider";
+import { useRouter } from "next/navigation";
+
+type FriendlyStatus = "perdido" | "adocao" | "encontrado";
+
+const statusMap: Record<FriendlyStatus, PetStatus> = {
+  perdido: "LOST",
+  adocao: "AVAILABLE",
+  encontrado: "FOUND",
+};
+
+interface PetForm {
+  name: string;
+  species: string;
+  breed: string;
+  age: string;
+  sex: string;
+  description: string;
+  statusFriendly: FriendlyStatus;
+  photo: File | null;
+}
+
+const initialForm: PetForm = {
+  name: "",
+  species: "",
+  breed: "",
+  age: "",
+  sex: "",
+  description: "",
+  statusFriendly: "perdido",
+  photo: null,
+};
 
 export default function CadastrarPetPage() {
-  const [formData, setFormData] = useState({
-    nome: '',
-    tipo: '',
-    raca: '',
-    idade: '',
-    sexo: '',
-    tamanho: '',
-    cor: '',
-    localizacao: '',
-    descricao: '',
-    status: 'perdido',
-    contato: '',
-    imagem: null as File | null
-  });
-
+  const [formData, setFormData] = useState<PetForm>(initialForm);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { token } = useAuth();
+  const router = useRouter();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
+  const canSubmit = useMemo(() => {
+    return Boolean(
+      formData.name &&
+        formData.species &&
+        formData.description &&
+        token &&
+        !loading,
+    );
+  }, [formData, token, loading]);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const compressImage = (file: File, maxWidth = 1200, quality = 0.8): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Redimensiona se necessário
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Não foi possível criar contexto do canvas'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressed);
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData({
-        ...formData,
-        imagem: file
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Valida tamanho do arquivo (máximo 5MB antes de compressão)
+    if (file.size > 5 * 1024 * 1024) {
+      setFeedback({
+        type: "error",
+        message: "A imagem é muito grande. Por favor, escolha uma imagem menor que 5MB.",
       });
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, photo: file }));
+    
+    try {
+      // Comprime a imagem antes de mostrar o preview
+      const compressed = await compressImage(file);
+      setPreviewImage(compressed);
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: "Erro ao processar a imagem. Tente novamente.",
+      });
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Pet form submitted:', formData);
+    if (!token) {
+      setFeedback({
+        type: "error",
+        message: "Faça login para cadastrar um pet.",
+      });
+      return;
+    }
+    setLoading(true);
+    setFeedback(null);
+    try {
+      await petService.create(
+        {
+          name: formData.name,
+          species: formData.species,
+          breed: formData.breed,
+          age: formData.age ? Number(formData.age) : undefined,
+          description: formData.description,
+          status: statusMap[formData.statusFriendly],
+          sex: formData.sex,
+          photoUrl: previewImage ?? undefined,
+        },
+        token,
+      );
+      setFeedback({
+        type: "success",
+        message: "Pet enviado com sucesso!",
+      });
+      setFormData(initialForm);
+      setPreviewImage(null);
+      router.push("/");
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message:
+          (error as { message?: string })?.message ??
+          "Não foi possível cadastrar o pet.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#212121] py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <Logo className="h-16 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-white mb-2">Cadastrar Pet</h1>
-          <p className="text-gray-400">Ajude a encontrar um lar ou encontre seu pet perdido</p>
+    <div className="min-h-screen bg-[#050505] py-10 px-4">
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div className="text-center space-y-4 text-white">
+          <Logo className="h-16 mx-auto" />
+          <h1 className="text-4xl font-bold">Cadastrar novo pet</h1>
+          <p className="text-white/70 max-w-2xl mx-auto">
+            Este formulário envia os dados para cadastrar o pet. Preencha o formulário
+            abaixo para disponibilizar o pet para adoção, resgate ou para indicar que foi encontrado.
+          </p>
         </div>
 
-        <div className="bg-dark-gray rounded-lg shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                Tipo de anúncio
-              </label>
-              <div className="flex gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="perdido"
-                    checked={formData.status === 'perdido'}
-                    onChange={handleInputChange}
-                    className="mr-2 text-primary focus:ring-primary"
-                  />
-                  <span className="text-white">Pet Perdido</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="adocao"
-                    checked={formData.status === 'adocao'}
-                    onChange={handleInputChange}
-                    className="mr-2 text-primary focus:ring-primary"
-                  />
-                  <span className="text-white">Para Adoção</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="encontrado"
-                    checked={formData.status === 'encontrado'}
-                    onChange={handleInputChange}
-                    className="mr-2 text-primary focus:ring-primary"
-                  />
-                  <span className="text-white">Pet Encontrado</span>
-                </label>
-              </div>
+        <div className="bg-[#111] border border-white/10 rounded-3xl p-8 space-y-8 shadow-2xl shadow-black/40">
+          {feedback && (
+            <div
+              className={`rounded-2xl px-4 py-3 text-sm ${
+                feedback.type === "success"
+                  ? "bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
+                  : "bg-red-500/10 text-red-200 border border-red-500/30"
+              }`}
+            >
+              {feedback.message}
             </div>
+          )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="nome" className="block text-sm font-medium text-gray-300 mb-2">
-                  Nome do pet *
-                </label>
-                <input
-                  type="text"
-                  id="nome"
-                  name="nome"
-                  value={formData.nome}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ex: Luna, Thor, Mimi"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="tipo" className="block text-sm font-medium text-gray-300 mb-2">
-                  Tipo de animal *
-                </label>
-                <select
-                  id="tipo"
-                  name="tipo"
-                  value={formData.tipo}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  required
-                >
-                  <option value="">Selecione o tipo</option>
-                  <option value="cachorro">Cachorro</option>
-                  <option value="gato">Gato</option>
-                  <option value="passaro">Pássaro</option>
-                  <option value="coelho">Coelho</option>
-                  <option value="outro">Outro</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="raca" className="block text-sm font-medium text-gray-300 mb-2">
-                  Raça
-                </label>
-                <input
-                  type="text"
-                  id="raca"
-                  name="raca"
-                  value={formData.raca}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ex: Golden Retriever, SRD, Persa"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="idade" className="block text-sm font-medium text-gray-300 mb-2">
-                  Idade
-                </label>
-                <input
-                  type="text"
-                  id="idade"
-                  name="idade"
-                  value={formData.idade}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ex: 2 anos, 6 meses, filhote"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="sexo" className="block text-sm font-medium text-gray-300 mb-2">
-                  Sexo
-                </label>
-                <select
-                  id="sexo"
-                  name="sexo"
-                  value={formData.sexo}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="">Selecione</option>
-                  <option value="macho">Macho</option>
-                  <option value="femea">Fêmea</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="tamanho" className="block text-sm font-medium text-gray-300 mb-2">
-                  Tamanho
-                </label>
-                <select
-                  id="tamanho"
-                  name="tamanho"
-                  value={formData.tamanho}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="">Selecione</option>
-                  <option value="pequeno">Pequeno</option>
-                  <option value="medio">Médio</option>
-                  <option value="grande">Grande</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="cor" className="block text-sm font-medium text-gray-300 mb-2">
-                  Cor
-                </label>
-                <input
-                  type="text"
-                  id="cor"
-                  name="cor"
-                  value={formData.cor}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ex: Branco, Marrom, Preto e branco"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="contato" className="block text-sm font-medium text-gray-300 mb-2">
-                  Contato *
-                </label>
-                <input
-                  type="text"
-                  id="contato"
-                  name="contato"
-                  value={formData.contato}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="WhatsApp, telefone ou email"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="localizacao" className="block text-sm font-medium text-gray-300 mb-2">
-                Localização *
-              </label>
-              <input
-                type="text"
-                id="localizacao"
-                name="localizacao"
-                value={formData.localizacao}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Ex: Centro, Santos - SP"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="descricao" className="block text-sm font-medium text-gray-300 mb-2">
-                Descrição *
-              </label>
-              <textarea
-                id="descricao"
-                name="descricao"
-                value={formData.descricao}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                placeholder="Conte mais sobre o pet: personalidade, cuidados especiais, última vez visto, etc."
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="imagem" className="block text-sm font-medium text-gray-300 mb-2">
-                Foto do pet
-              </label>
-              <div className="flex items-center justify-center w-full">
-                <label htmlFor="imagem" className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-gray-800 hover:bg-gray-700 transition-colors">
-                  {previewImage ? (
-                    <img
-                      src={previewImage}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <svg className="w-8 h-8 mb-4 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.5 6.5c0 1.43.425 2.74 1.15 3.85A5.56 5.56 0 0 0 4 13H1m12-8v8m-4-8V5a2 2 0 1 1 4 0v8m-4-8H8m4 0V5a2 2 0 1 1 4 0v8m-4-8H8"/>
-                      </svg>
-                      <p className="mb-2 text-sm text-gray-400">
-                        <span className="font-semibold">Clique para upload</span> ou arraste e solte
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <section className="space-y-4">
+              <h2 className="text-white font-semibold text-lg">Status do anúncio</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(["perdido", "adocao", "encontrado"] as FriendlyStatus[]).map(
+                  (status) => (
+                    <label
+                      key={status}
+                      className={`border rounded-2xl p-4 cursor-pointer transition ${
+                        formData.statusFriendly === status
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-white/10 text-white/70"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="statusFriendly"
+                        value={status}
+                        checked={formData.statusFriendly === status}
+                        onChange={handleInputChange}
+                        className="hidden"
+                      />
+                      <p className="font-semibold">
+                        {status === "perdido"
+                          ? "Pet perdido"
+                          : status === "adocao"
+                          ? "Para adoção"
+                          : "Pet encontrado"}
                       </p>
-                      <p className="text-xs text-gray-400">PNG, JPG ou GIF (MAX. 10MB)</p>
-                    </div>
-                  )}
-                  <input
-                    id="imagem"
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </label>
+                      <p className="text-xs mt-1">
+                        {status === "perdido"
+                          ? "Será salvo como Perdido"
+                          : status === "adocao"
+                          ? "Será salvo como Disponível"
+                          : "Será salvo como Encontrado"}
+                      </p>
+                    </label>
+                  ),
+                )}
               </div>
-            </div>
+            </section>
 
-            <div className="flex gap-4 pt-4">
-                           <Link
-                href={'/'}
-                className="flex-1 justify-center text-center bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+              <div>
+                <label className="block text-sm mb-2">Nome do pet *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Ex: Luna"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-2">Espécie *</label>
+                <input
+                  type="text"
+                  name="species"
+                  value={formData.species}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Cachorro, gato..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-2">Raça</label>
+                <input
+                  type="text"
+                  name="breed"
+                  value={formData.breed}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-2">Idade (anos)</label>
+                <input
+                  type="number"
+                  name="age"
+                  value={formData.age}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-2">Sexo</label>
+                <select
+                  name="sex"
+                  value={formData.sex}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Selecione</option>
+                  <option value="FEMALE">Fêmea</option>
+                  <option value="MALE">Macho</option>
+                </select>
+              </div>
+            </section>
+
+            <section className="space-y-3 text-white">
+              <label className="block text-sm">Descrição *</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                required
+                rows={4}
+                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Conte detalhes sobre o comportamento, cuidados e situação atual."
+              />
+            </section>
+
+            <section className="space-y-4 text-white">
+              <label className="block text-sm">Foto destacada</label>
+              <label className="flex flex-col items-center justify-center h-64 border border-dashed border-white/20 rounded-3xl cursor-pointer bg-white/5 hover:bg-white/10 transition">
+                {previewImage ? (
+                  <img
+                    src={previewImage}
+                    alt="Preview"
+                    className="w-full h-full object-cover rounded-3xl"
+                  />
+                ) : (
+                  <span className="text-white/60 text-sm">
+                    Clique para subir uma imagem (opcional)
+                  </span>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+              </label>
+            </section>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Link
+                href="/"
+                className="flex-1 text-center px-6 py-3 rounded-2xl border border-white/15 text-white hover:bg-white/5 transition"
               >
                 Cancelar
               </Link>
               <button
                 type="submit"
-                className="flex-1 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                disabled={!canSubmit}
+                className="flex-1 px-6 py-3 rounded-2xl bg-primary text-black font-semibold hover:bg-primary-dark transition disabled:opacity-50"
               >
-                Publicar Anúncio
+                {loading ? "Enviando..." : "Publicar anúncio"}
               </button>
             </div>
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-gray-400 text-sm">
-            © {new Date().getFullYear()} Petly. Todos os direitos reservados.
-          </p>
-        </div>
+        <p className="text-center text-white/50 text-sm">
+          © {new Date().getFullYear()} Petly. Integração com o servidor.
+        </p>
       </div>
     </div>
   );
 }
-
