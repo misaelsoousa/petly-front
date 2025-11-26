@@ -209,7 +209,7 @@ export default function CadastrarPetPage() {
                       key={status}
                       className={`border rounded-2xl p-4 cursor-pointer transition ${
                         formData.statusFriendly === status
-                          ? "border-primary bg-primary/10 text-primary"
+                          ? "border-orange-500 bg-orange-500/10 text-orange-500"
                           : "border-white/10 text-white/70"
                       }`}
                     >
@@ -250,7 +250,7 @@ export default function CadastrarPetPage() {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Ex: Luna"
                 />
               </div>
@@ -262,7 +262,7 @@ export default function CadastrarPetPage() {
                   value={formData.species}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Cachorro, gato..."
                 />
               </div>
@@ -273,7 +273,7 @@ export default function CadastrarPetPage() {
                   name="breed"
                   value={formData.breed}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               <div>
@@ -283,7 +283,7 @@ export default function CadastrarPetPage() {
                   name="age"
                   value={formData.age}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               <div>
@@ -292,7 +292,7 @@ export default function CadastrarPetPage() {
                   name="sex"
                   value={formData.sex}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="">Selecione</option>
                   <option value="FEMALE">Fêmea</option>
@@ -309,7 +309,7 @@ export default function CadastrarPetPage() {
                 onChange={handleInputChange}
                 required
                 rows={4}
-                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="Conte detalhes sobre o comportamento, cuidados e situação atual."
               />
             </section>
@@ -347,7 +347,7 @@ export default function CadastrarPetPage() {
               <button
                 type="submit"
                 disabled={!canSubmit}
-                className="flex-1 px-6 py-3 rounded-2xl bg-primary text-black font-semibold hover:bg-primary-dark transition disabled:opacity-50"
+                className="flex-1 px-6 py-3 rounded-2xl bg-orange-500 text-black font-semibold hover:bg-orange-500-dark transition disabled:opacity-50"
               >
                 {loading ? "Enviando..." : "Publicar anúncio"}
               </button>

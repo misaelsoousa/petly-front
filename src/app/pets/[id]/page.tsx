@@ -1,41 +1,58 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { petService } from "@/services/petService";
 import { statusLabel } from "@/lib/statusLabels";
-import type { Metadata } from "next";
+import type { Pet } from "@/lib/types";
 
-interface PetPageProps {
+type PageProps = {
   params: { id: string };
-}
+};
 
-export async function generateMetadata({ params }: PetPageProps): Promise<Metadata> {
-  try {
-    const pet = await petService.getById(Number(params.id));
-    return {
-      title: pet.name ?? `Pet ${params.id}`,
-      description: pet.description ?? "Detalhes do pet",
-    } as Metadata;
-  } catch (err) {
-    return {
-      title: `Pet ${params.id}`,
-    } as Metadata;
-  }
-}
+export default function PetDetailPage({ params }: PageProps) {
+  const [pet, setPet] = useState<Pet | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function PetDetailPage({ params }: PetPageProps) {
-  const id = Number(params.id);
-  let pet;
-  try {
-    pet = await petService.getById(id);
-  } catch (err) {
+  useEffect(() => {
+    const fetchPet = async () => {
+      try {
+        setLoading(true);
+        const id = Number(params.id);
+        const petData = await petService.getById(id);
+        setPet(petData);
+      } catch (err) {
+        setError("Não foi possível carregar os dados do pet.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPet();
+  }, [params.id]);
+
+  if (loading) {
     return (
       <main className="min-h-screen bg-[#0d0d0f] text-white flex items-center justify-center">
-        <div className="max-w-4xl px-4">
-          <p className="text-center text-red-400">Não foi possível carregar o pet {id}.</p>
-          <div className="text-center mt-4">
-            <Link href="/" className="px-4 py-2 rounded-full bg-white text-black">Voltar à home</Link>
-          </div>
-        </div>
+        <p>Carregando...</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-[#0d0d0f] text-white flex items-center justify-center">
+        <p>{error}</p>
+      </main>
+    );
+  }
+
+  if (!pet) {
+    return (
+      <main className="min-h-screen bg-[#0d0d0f] text-white flex items-center justify-center">
+        <p>Pet não encontrado.</p>
       </main>
     );
   }
@@ -52,14 +69,20 @@ export default async function PetDetailPage({ params }: PetPageProps) {
               className={`w-full h-auto rounded-lg ${!pet.photoUrl ? "object-contain p-6" : "object-cover"}`}
             />
           </div>
+
           <div className="flex-1">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold">{pet.name}</h1>
-                <p className="text-sm text-white/70">{pet.species} • {pet.breed ?? "Sem raça informada"} • {pet.age ? `${pet.age} anos` : `idade desconhecida`}</p>
+                <p className="text-sm text-white/70">
+                  {pet.species} • {pet.breed ?? "Sem raça informada"} •{" "}
+                  {pet.age ? `${pet.age} anos` : `idade desconhecida`}
+                </p>
               </div>
               <div className="text-right">
-                <Link href="/" className="text-sm text-white/60 hover:text-white">← Voltar</Link>
+                <Link href="/" className="text-sm text-white/60 hover:text-white">
+                  ← Voltar
+                </Link>
               </div>
             </div>
 
@@ -81,7 +104,6 @@ export default async function PetDetailPage({ params }: PetPageProps) {
                 <strong className="text-white/90">Status:</strong> {statusLabel(pet.status)}
               </div>
             </div>
-            
           </div>
         </div>
       </div>

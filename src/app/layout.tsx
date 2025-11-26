@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
+import { Roboto, Roboto_Mono } from "next/font/google";
 import "./globals.css";
-import { Roboto } from "next/font/google";
 import Providers from "@/providers/Providers";
 import ClientNavWrapper from "@/components/ClientNavWrapper";
+import { Metadata } from "next";
 
 const roboto = Roboto({
   weight: ["400", "500", "700"],
@@ -11,8 +10,8 @@ const roboto = Roboto({
   variable: "--font-roboto",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const robotoMono = Roboto_Mono({
+  variable: "--font-roboto-mono",
   subsets: ["latin"],
 });
 
@@ -29,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body
-        className={`${roboto.variable} ${geistMono.variable} antialiased`}
+        className={`${roboto.variable} ${robotoMono.variable} antialiased`}
       >
         <Providers>
           {/* Global navigation available across pages; hide on login using ClientNavWrapper */}

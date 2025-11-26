@@ -123,7 +123,7 @@ export default function Navbar({ searchValue, onSearchChange }: NavbarProps) {
                   ) : (
                     <Link
                       href="/login"
-                      className="block px-4 py-2 rounded-full bg-primary text-black font-semibold text-center"
+                      className="block px-4 py-2 rounded-full bg-orange-500 text-black font-semibold text-center"
                       onClick={() => setIsOpen(false)}
                     >
                       Entrar
@@ -160,7 +160,7 @@ export default function Navbar({ searchValue, onSearchChange }: NavbarProps) {
           ) : (
             <Link
               href="/login"
-              className="px-4 py-2 rounded-full bg-primary text-black font-semibold hover:bg-primary-dark transition"
+              className="px-4 py-2 rounded-full bg-orange-500 text-black font-semibold hover:bg-orange-500-dark transition"
             >
               Entrar
             </Link>

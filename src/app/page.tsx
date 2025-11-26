@@ -121,8 +121,8 @@ export default function Home() {
                   onClick={() => setStatusFilter(option.value)}
                   className={`px-4 py-2 rounded-full text-sm transition border ${
                     statusFilter === option.value
-                      ? "bg-primary text-black border-primary"
-                      : "border-white/15 text-white/70 hover:border-primary/60 cursor-pointer"
+                      ? "bg-orange-500 text-black border-orange-500 border-orange-500 text-white"
+                      : "border-white/15 text-white/70 hover:border-orange-500/60 cursor-pointer"
                   }`}
                 >
                   {option.label}
@@ -140,7 +140,7 @@ export default function Home() {
 
         <section id="eventos" className="w-full max-w-6xl mt-16 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-white">Eventos aprovados</h2>
+            <h2 className="text-2xl font-semibold text-white">Eventos</h2>
           </div>
           {eventsError ? (
             <p className="text-sm text-red-400">{eventsError}</p>
@@ -165,7 +165,7 @@ export default function Home() {
 
         <section
           id="denuncias"
-          className="w-full max-w-6xl mt-16 rounded-3xl border border-primary/40 bg-primary/10 p-6 text-white space-y-4"
+          className="w-full max-w-6xl mt-16 rounded-3xl border border-orange-500/40 bg-orange-500/10 p-6 text-white space-y-4"
         >
           <div>
             <h2 className="text-2xl font-semibold">Envie uma denúncia rápida</h2>

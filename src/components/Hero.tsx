@@ -44,12 +44,12 @@ export default function Hero({ searchValue, onSearchChange, stats }: HeroProps) 
           className="max-w-3xl space-y-6"
         >
           <p className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white/80 text-sm w-fit">
-            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
             Plataforma ativa em tempo real
           </p>
           <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight">
             Conectamos pessoas, ONGs e{" "}
-            <span className="text-primary">pets</span> em busca de um novo lar.
+            <span className="text-orange-500">pets</span> em busca de um novo lar.
           </h1>
           <p className="text-lg text-white/70">
             Publique resgates, acompanhe pedidos de adoção e participe de eventos
@@ -58,13 +58,13 @@ export default function Hero({ searchValue, onSearchChange, stats }: HeroProps) 
           <div className="flex flex-wrap gap-4">
             <a
               href="#posts"
-              className="px-6 py-3 rounded-full bg-primary text-black font-semibold hover:bg-primary-dark transition"
+              className="px-6 py-3 rounded-full bg-orange-500 text-black font-semibold hover:bg-orange-500-dark transition bg-orange-500 text-white"
             >
               Explorar animais
             </a>
             <a
               href="/cadastrar-pet"
-              className="px-6 py-3 rounded-full border border-white/30 text-white hover:border-primary hover:text-primary transition"
+              className="px-6 py-3 rounded-full border border-white/30 text-white hover:border-orange-500 hover:text-orange-500 transition"
             >
               Publicar pet
             </a>

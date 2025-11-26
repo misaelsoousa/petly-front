@@ -11,4 +11,3 @@ export const petService = {
   remove: (id: number, token: string | null) =>
     api.delete<{ message: string }>(`/pets/${id}`, token),
 };
-

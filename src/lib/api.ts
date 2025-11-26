@@ -17,14 +17,12 @@ interface RequestOptions<TBody> {
   cache?: RequestCache;
 }
 
+// 🔥 Agora SEM retorno undefined: garante JSON sempre
 async function parseResponse<T>(response: Response): Promise<T> {
-  const isJson = response.headers
-    .get("content-type")
-    ?.includes("application/json");
+  const contentType = response.headers.get("content-type");
 
-  if (!isJson) {
-    // Non JSON responses (like 204) should still resolve.
-    return undefined as T;
+  if (!contentType || !contentType.includes("application/json")) {
+    throw new Error("A API retornou um formato inválido (não JSON).");
   }
 
   return (await response.json()) as T;
@@ -32,7 +30,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
 
 export async function apiRequest<TResponse, TBody = unknown>(
   path: string,
-  options: RequestOptions<TBody> = {},
+  options: RequestOptions<TBody> = {}
 ): Promise<TResponse> {
   const {
     method = "GET",
@@ -42,13 +40,11 @@ export async function apiRequest<TResponse, TBody = unknown>(
     cache = "no-store",
   } = options;
 
-  const requestHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    ...headers,
-  };
+  const requestHeaders = new Headers(headers);
+  requestHeaders.set("Content-Type", "application/json");
 
   if (token) {
-    requestHeaders.Authorization = `Bearer ${token}`;
+    requestHeaders.set("Authorization", `Bearer ${token}`);
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -59,7 +55,14 @@ export async function apiRequest<TResponse, TBody = unknown>(
   });
 
   if (!response.ok) {
-    const errorBody = await parseResponse<unknown>(response);
+    let errorBody: unknown;
+
+    try {
+      errorBody = await parseResponse<unknown>(response);
+    } catch {
+      errorBody = null;
+    }
+
     const error: ApiError = {
       status: response.status,
       message:
@@ -67,6 +70,7 @@ export async function apiRequest<TResponse, TBody = unknown>(
         "Erro ao se comunicar com o servidor",
       details: errorBody,
     };
+
     throw error;
   }
 
@@ -76,27 +80,31 @@ export async function apiRequest<TResponse, TBody = unknown>(
 export const api = {
   get: <TResponse>(path: string, token?: string | null, cache?: RequestCache) =>
     apiRequest<TResponse>(path, { token, cache }),
+
   post: <TResponse, TBody>(
     path: string,
     body: TBody,
-    token?: string | null,
+    token?: string | null
   ) => apiRequest<TResponse, TBody>(path, { method: "POST", body, token }),
+
   put: <TResponse, TBody>(
     path: string,
     body: TBody,
-    token?: string | null,
+    token?: string | null
   ) => apiRequest<TResponse, TBody>(path, { method: "PUT", body, token }),
+
   patch: <TResponse, TBody>(
     path: string,
     body: TBody,
-    token?: string | null,
+    token?: string | null
   ) => apiRequest<TResponse, TBody>(path, { method: "PATCH", body, token }),
+
   delete: <TResponse>(path: string, token?: string | null) =>
     apiRequest<TResponse>(path, { method: "DELETE", token }),
 };
 
+// Paginação (inalterado)
 export type PaginatedResponse<T> = {
   data: T[];
   total: number;
 };
-

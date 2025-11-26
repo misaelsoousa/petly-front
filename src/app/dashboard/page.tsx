@@ -292,7 +292,7 @@ export default function DashboardPage() {
                       onClick={() => handleAdoptionUpdate(request.id, status)}
                       className={`px-3 py-2 rounded-xl text-xs ${
                         request.status === status
-                          ? "bg-primary text-black"
+                          ? "bg-orange-500 text-black"
                           : "bg-white/5 text-white/70"
                       }`}
                     >
@@ -360,7 +360,7 @@ export default function DashboardPage() {
         />
         <button
           type="submit"
-          className="md:col-span-2 px-4 py-3 rounded-2xl bg-primary text-black font-semibold"
+          className="md:col-span-2 px-4 py-3 rounded-2xl bg-orange-500 text-black font-semibold"
         >
           Criar evento
         </button>
@@ -426,7 +426,7 @@ export default function DashboardPage() {
         />
         <button
           type="submit"
-          className="px-4 py-3 rounded-2xl bg-primary text-black font-semibold"
+          className="px-4 py-3 rounded-2xl bg-orange-500 text-black font-semibold"
         >
           Enviar denúncia
         </button>
@@ -510,7 +510,7 @@ export default function DashboardPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 rounded-full text-sm ${
                 activeTab === tab.id
-                  ? "bg-primary text-black font-semibold"
+                  ? "bg-orange-500 text-black font-semibold"
                   : "bg-white/5 text-white/70"
               }`}
             >

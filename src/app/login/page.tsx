@@ -102,7 +102,7 @@ export default function LoginPage() {
         onFocus={resetFeedback}
         required={required}
         placeholder={placeholder}
-        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500"
       />
     </div>
   );
@@ -110,7 +110,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#050505] px-4 flex items-center justify-center">
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 border border-white/5 rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
-        <div className="relative hidden md:block bg-gradient-to-br from-primary/30 to-transparent p-10">
+        <div className="relative hidden md:block bg-gradient-to-br from-orange-500/30 to-transparent p-10">
           <div className="absolute inset-0 bg-[url('/img/gato-com-crianca-meio.jpg')] opacity-30 bg-cover bg-center" />
           <div className="relative z-10 text-white space-y-6">
             <Logo className="h-14" />
@@ -149,7 +149,7 @@ export default function LoginPage() {
                 onClick={() => setAuthMode(mode)}
                 className={`flex-1 py-2 text-sm rounded-full transition ${
                   authMode === mode
-                    ? "bg-primary text-black font-semibold"
+                    ? "bg-orange-500 text-black font-semibold"
                     : "text-white/60"
                 }`}
               >
@@ -192,7 +192,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 rounded-2xl bg-primary text-black font-semibold hover:bg-primary-dark transition disabled:opacity-60"
+              className="w-full py-3 rounded-2xl bg-orange-500 text-black font-semibold hover:bg-primary-dark transition disabled:opacity-60"
             >
               {isSubmitting ? "Enviando..." : "Continuar"}
             </button>

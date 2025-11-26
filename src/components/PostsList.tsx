@@ -153,7 +153,7 @@ export default function PostsList({
                 <div className="flex items-center gap-3 mt-auto">
                   <button
                     onClick={() => handleAdopt(pet.id)}
-                    className="flex-1 px-4 py-3 rounded-2xl bg-primary text-black font-semibold hover:bg-primary-dark transition"
+                    className="flex-1 px-4 py-3 rounded-2xl bg-orange-500 text-black font-semibold hover:bg-orange-500-dark transition"
                   >
                     Quero adotar
                   </button>

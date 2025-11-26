@@ -14,7 +14,7 @@ export default function SearchBar({
 }: SearchBarProps) {
   return (
     <form className="w-full flex items-center gap-2">
-      <div className="px-4 flex gap-3 w-full py-2 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm transition hover:border-primary/80" >
+      <div className="px-4 flex gap-3 w-full py-2 rounded-full border border-white/30 bg-white/5 backdrop-blur-sm transition hover:border-orange-500/80" >
         <SearchIcon />
         <input
           type="text"
