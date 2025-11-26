@@ -87,7 +87,7 @@ export default function PostsList({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 auto-rows-[320px] gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 auto-rows-[448px] gap-6">
         {pets.map((pet, index) => {
           const isFallback = !pet.photoUrl || pet.photoUrl.trim().length === 0;
           return (
@@ -99,10 +99,10 @@ export default function PostsList({
             transition={{ delay: index * 0.03 }}
             className={`rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br ${
               gradients[index % gradients.length]
-            }`}
+            } flex flex-col`} // Added flex flex-col
           >
             {/* === Área da Imagem (Link) === */}
-            <div className={`relative h-44 overflow-hidden ${isFallback ? "flex items-center justify-center bg-white/5" : ""}`}>
+            <div className={`relative h-48 overflow-hidden ${isFallback ? "flex items-center justify-center bg-white/5" : ""}`}>
               <Link href={`/pets/${pet.id}`} className="block h-full w-full"> {/* <--- Link apenas na imagem */}
                 <img
                   src={
@@ -126,7 +126,7 @@ export default function PostsList({
             </div>
 
             {/* === Área do Conteúdo/Texto === */}
-            <div className="p-5 flex flex-col gap-3 text-white">
+            <div className="p-5 flex flex-col gap-3 text-white flex-grow">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-xl font-semibold">
                   <Link href={`/pets/${pet.id}`} className="hover:underline"> {/* <--- Link no título */}
@@ -139,10 +139,12 @@ export default function PostsList({
                   </span>
                 )}
               </div>
-              <p className="text-sm text-white/80 line-clamp-3">
-                {pet.description ?? "Esse pet ainda não possui descrição."}
-              </p>
-              <div className="flex flex-wrap gap-2 text-xs uppercase tracking-wide text-white/60">
+              <div className="h-24 overflow-y-auto pr-2"> {/* Wrapper for scrolling */}
+                <p className="text-sm text-white/80">
+                  {pet.description ?? "Esse pet ainda não possui descrição."}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs uppercase tracking-wide text-white/60 mt-auto">
                 <span>{pet.species}</span>
                 {pet.breed && <span>• {pet.breed}</span>}
                 {pet.age && <span>• {pet.age} anos</span>}
@@ -150,7 +152,7 @@ export default function PostsList({
 
               {pet.status === "AVAILABLE" && (
                 // Estes botões estão FORA de qualquer Link, resolvendo o erro de hidratação.
-                <div className="flex items-center gap-3 mt-auto">
+                <div className="flex items-center gap-3 mt-4">
                   <button
                     onClick={() => handleAdopt(pet.id)}
                     className="flex-1 px-4 py-3 rounded-2xl bg-orange-500 text-black font-semibold hover:bg-orange-500-dark transition"
